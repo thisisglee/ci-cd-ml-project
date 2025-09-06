@@ -1,6 +1,6 @@
-# CI/CD Tools and Practices Final Project Template
+# CI/CD Tools and Practices MLOps Project Template
 
-This repository contains the template to be used for the Final Project for the Coursera course **CI/CD Tools and Practices**.
+This repository contains the template to be used for the MLOps Project for the Coursera course **CI/CD Tools and Practices**.
 
 ## Usage
 
