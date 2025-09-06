@@ -1,0 +1,73 @@
+# Compulsary API version for Tekton Task objects
+apiVersion: tekton.dev/v1beta1
+# Kind of resource
+kind: Task
+# Metadata to reference the Pipelines
+metadata:
+  name: "cleanup-workspace"
+# Specification of the task that what it will do
+spec:
+  description: "Removing all files from source workspace, meaning reseting the workspace"
+  # declare where task will be mounted in
+  workspaces:
+    # nameo f wrokspace
+    - name: source
+  # Steps each 
+  steps:
+    - name: remove
+      image: alpine:3
+      env:
+        - name: WORKSPACE_SOURCE_PATH
+          value: $(workspaces.source.path)
+      # Run commands in the workspace directory
+      workingDir: $(workspaces.source.path)
+      # run as root because we're deleting files
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+      # The script executed inside the container
+      script: |
+        #!/usr/bin/env sh
+        set -eu
+        echo "Removing all files from ${WORKSPACE_SOURCE_PATH} ..."
+        # Delete any existing contents of the directory if it exists.
+        #
+        # We don't just "rm -rf ${WORKSPACE_SOURCE_PATH}" because ${WORKSPACE_SOURCE_PATH} might be "/"
+        # or the root of a mounted volume.
+        if [ -d "${WORKSPACE_SOURCE_PATH}" ] ; then
+          # Delete non-hidden files and directories
+          rm -rf "${WORKSPACE_SOURCE_PATH:?}"/*
+          # Delete files and directories starting with . but excluding ..
+          rm -rf "${WORKSPACE_SOURCE_PATH}"/.[!.]*
+          # Delete files and directories starting with .. plus any other character
+          rm -rf "${WORKSPACE_SOURCE_PATH}"/..?*
+        fi
+
+---
+# Add nosetests
+# compuldary api version
+apiVersion: tekton.dev/v1beta1
+# kind of resource
+kind: Task
+# metadata for pipeline reference
+metadata:
+  name: nose
+# Specification for tasks
+spec:
+  # takes parameters
+  params:
+    - name: args
+      description: "Arguments to pass to nose"
+      type: string
+      default: "-v"
+  # steps to be run in Pod
+  steps:
+    - name: nosetests
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)
+      script: |
+          #!/bin/bash
+          set -e
+          python -m pip install --upgrade pip wheel
+          pip install -r requirements.txt
+          nosetests $(params.args)
