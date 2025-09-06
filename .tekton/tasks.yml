@@ -54,6 +54,8 @@ metadata:
   name: nose
 # Specification for tasks
 spec:
+  workspaces:
+    - name: source
   # takes parameters
   params:
     - name: args
